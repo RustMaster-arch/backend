@@ -27,7 +27,6 @@ pub struct ClientRequest {
 pub struct User {
     pub user_id: String,
     pub user_name: String,
-    pub points: i32,
 }
 
 pub struct UserDb<'a> {
@@ -53,10 +52,9 @@ impl<'a> UserDb<'a> {
     }
 
     pub async fn save_user(&self, user: User) -> Result<(), Box<dyn Error>> {
-        sqlx::query!("INSERT INTO users (user_id, user_name, points) VALUES ($1, $2, $3)",
+        sqlx::query!("INSERT INTO users (user_id, user_name) VALUES ($1, $2)",
             user.user_id,
             user.user_name,
-            user.points,
         )
             .execute(self.pool)
         .await?;
@@ -75,15 +73,14 @@ impl<'a> UserDb<'a> {
 async fn test(pool: PgPool) -> sqlx::Result<()> {
     let userdb = UserDb::new(&pool);
 
-    userdb.save_user(User { user_id: "348".to_string(), user_name: "rust".to_string(), points: 500}).await;
+    userdb.save_user(User { user_id: "348".to_string(), user_name: "rust".to_string()}).await;
 
-    let users = sqlx::query_as!(User, "SELECT * FROM users")
+    let users = sqlx::query_as!(User, "SELECT user_name, user_id FROM users")
         .fetch_all(&pool).await?;
 
     assert_eq!(users.len(), 1);
     assert_eq!(users[0].user_name, "rust");
     assert_eq!(users[0].user_id, "348");
-    assert_eq!(users[0].points, 500);
     
     Ok(())
 }
