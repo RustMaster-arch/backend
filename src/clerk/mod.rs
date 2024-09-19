@@ -17,6 +17,7 @@ pub fn router(pool: PgPool) -> Router {
 
 
 pub async fn add(State(pool): State<PgPool>, Json(user_clerk): Json<User>) -> Result<impl IntoResponse, StatusCode> {
+    println!("request: {:#?}", user_clerk);
     let userdb = UserDb::new(&pool);
     userdb.save_user(user_clerk).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
