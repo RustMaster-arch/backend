@@ -3,6 +3,13 @@ use std::error::Error;
 use serde::{Deserialize, Serialize};
 use sqlx::{Acquire, Executor, PgPool};
 
+const EASY_MULTIPLIER: f32 = 1.0;
+const MEDIUM_MULTIPLIER: f32 = 1.2;
+const HARD_MULTIPLIER: f32 = 1.5;
+const VERY_HARD_MULTIPLIER: f32 = 1.75;
+
+const CORRECT_POINTS: u32 = 10;
+
 #[derive(Clone, Serialize, Deserialize, Default, Debug, PartialEq)]
 pub struct UIQuestion {
     pub question: String,
@@ -27,6 +34,18 @@ pub struct ClientRequest {
 pub struct User {
     pub user_id: String,
     pub user_name: String,
+}
+
+pub struct StatsUi {
+    pub user_id: String,
+    pub correct_answers: u32,
+    pub difficulty: String,
+}
+
+pub struct UserU {
+    pub user_id: String,
+    pub user_name: String,
+    pub points: i32,
 }
 
 pub struct UserDb<'a> {
@@ -69,6 +88,32 @@ impl<'a> UserDb<'a> {
     }
 }
 
+impl StatsUi {
+    pub fn new(correct_answers: u32, difficulty: &str, user_id: &str) -> Self {
+        Self { user_id: user_id.to_string(), correct_answers, difficulty: difficulty.to_string() }
+    }
+    pub fn get_points(&self) -> u32 {
+        let current_correct_points = CORRECT_POINTS * self.correct_answers;
+
+        match self.difficulty.as_str() {
+            "easy" => (current_correct_points as f32 * EASY_MULTIPLIER) as u32,
+            "medium" => (current_correct_points as f32 * MEDIUM_MULTIPLIER) as u32,
+            "hard" => (current_correct_points as f32 * HARD_MULTIPLIER) as u32,
+            "very_hard" => (current_correct_points as f32 * VERY_HARD_MULTIPLIER) as u32,
+            _ => 0,
+        }
+    }
+
+    pub async fn update_points(&self, pool: PgPool) -> Result<(), Box<dyn Error>> {
+        let userdb = UserDb::new(&pool);
+        let points = self.get_points() as i32;
+
+        sqlx::query!("UPDATE users SET points = $1 WHERE user_id = $2", points, self.user_id).execute(userdb.pool).await?;
+
+        Ok(())
+    }
+}
+
 #[sqlx::test]
 async fn test(pool: PgPool) -> sqlx::Result<()> {
     let userdb = UserDb::new(&pool);
@@ -82,5 +127,23 @@ async fn test(pool: PgPool) -> sqlx::Result<()> {
     assert_eq!(users[0].user_name, "rust");
     assert_eq!(users[0].user_id, "348");
     
+    Ok(())
+}
+
+#[sqlx::test]
+async fn update_test(pool: PgPool) -> sqlx::Result<()> {
+    let userdb = UserDb::new(&pool);
+
+    userdb.save_user(User { user_id: "38".to_string(), user_name: "rust".to_string()}).await;
+
+    let stats = StatsUi::new(3, "easy", "38");
+    
+    stats.update_points(pool.clone()).await;
+
+    let users = sqlx::query_as!(UserU, "SELECT * FROM users")
+        .fetch_all(&pool).await?;
+
+    assert_eq!(users[0].points, 30);
+
     Ok(())
 }
