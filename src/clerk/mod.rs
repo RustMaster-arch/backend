@@ -6,7 +6,7 @@ use axum::response::IntoResponse;
 use axum::{extract::State, routing::post, extract::Json, Router};
 use sqlx::PgPool;
 
-use crate::structs::{User, UserDb};
+use crate::structs::{StatsUi, User, UserDb};
 
 pub fn router(pool: PgPool) -> Router {
     Router::new()
@@ -15,9 +15,7 @@ pub fn router(pool: PgPool) -> Router {
         .with_state(pool) 
 }
 
-
 pub async fn add(State(pool): State<PgPool>, Json(user_clerk): Json<User>) -> Result<impl IntoResponse, StatusCode> {
-    println!("request: {:#?}", user_clerk);
     let userdb = UserDb::new(&pool);
     userdb.save_user(user_clerk).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 

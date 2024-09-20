@@ -28,6 +28,7 @@ pub struct ClientRequest {
     pub question_index: usize,
     pub difficulty: String,
     pub answer_index: usize,
+    pub user_id: String,
 }
 
 #[derive(Clone, Serialize, Deserialize, Default, Debug)]
@@ -86,12 +87,22 @@ impl<'a> UserDb<'a> {
 
         Ok(())
     }
+
+    pub async fn add_points_to_user(&self, user_id: &str, points: i32) -> Result<(), Box<dyn Error>> {
+
+        let prev_points = sqlx::query_scalar!("SELECT points FROM users WHERE user_id = $1", user_id).fetch_one(self.pool).await?;
+
+        sqlx::query!("UPDATE users SET points = $1 WHERE user_id = $2", points + prev_points, user_id).execute(self.pool).await?;
+
+        Ok(())
+    }
 }
 
 impl StatsUi {
     pub fn new(correct_answers: u32, difficulty: &str, user_id: &str) -> Self {
         Self { user_id: user_id.to_string(), correct_answers, difficulty: difficulty.to_string() }
     }
+
     pub fn get_points(&self) -> u32 {
         let current_correct_points = CORRECT_POINTS * self.correct_answers;
 
@@ -107,9 +118,9 @@ impl StatsUi {
     pub async fn update_points(&self, pool: PgPool) -> Result<(), Box<dyn Error>> {
         let userdb = UserDb::new(&pool);
         let points = self.get_points() as i32;
-
-        sqlx::query!("UPDATE users SET points = $1 WHERE user_id = $2", points, self.user_id).execute(userdb.pool).await?;
-
+        
+        userdb.add_points_to_user(&self.user_id, points);
+        
         Ok(())
     }
 }

@@ -8,19 +8,20 @@ use axum::{
 use clerk::router;
 use dotenvy::dotenv;
 use questions::{easy, hard, medium, very_hard};
-use sqlx::postgres::PgPoolOptions;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use tower_http::cors::CorsLayer;
 use std::{env, sync::Arc, time::Duration};
 mod structs;
 mod questions;
 mod clerk;
-use structs::{ClientRequest, Question, UIQuestion};
+use structs::{ClientRequest, Question, StatsUi, UIQuestion, UserDb};
 
 struct AppState {
     easy: Vec<Question>,
     medium: Vec<Question>,
     hard: Vec<Question>,
     very_hard: Vec<Question>,
+    pool: PgPool,
 }
 
 #[tokio::main]
@@ -32,12 +33,6 @@ async fn main() {
     let hard: Vec<Question> = hard();
     let very_hard: Vec<Question> = very_hard(); 
 
-    let app_state = Arc::new(AppState {
-        easy,
-        medium,
-        hard,
-        very_hard,
-    });
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
@@ -48,10 +43,17 @@ async fn main() {
         .await
         .expect("can't connect to database");
 
+    let app_state = Arc::new(AppState {
+        easy,
+        medium,
+        hard,
+        very_hard,
+        pool: pool.clone(),
+    });
 
     let cors = CorsLayer::permissive();
 
-    let user_creation_router = router(pool);
+    let user_creation_router = router(pool.clone());
 
     let app = Router::new()
         .route("/:difficulty", get(questions))
@@ -79,6 +81,8 @@ async fn questions(Path(difficulty): Path<String>, State(state): State<Arc<AppSt
 }
 
 async fn correct(State(state): State<Arc<AppState>>, Query(ui_question): Query<ClientRequest>) -> Result<impl IntoResponse, StatusCode> {
+    let mut stats: StatsUi = StatsUi::new(0, "", "");
+
     let questions = match ui_question.difficulty.as_str() {
         "easy" => &state.easy,
         "medium" => &state.medium,
@@ -90,11 +94,17 @@ async fn correct(State(state): State<Arc<AppState>>, Query(ui_question): Query<C
     let result = questions.iter().find_map(|question| {
         if question.question == questions[ui_question.question_index].question && 
         question.answers[ui_question.answer_index] == question.answers[question.correct_index] {
+
+            stats = StatsUi::new(1, &ui_question.difficulty, &ui_question.user_id);
             return Some(true)
+
         } else {
+            stats = StatsUi::new(0, &ui_question.difficulty, &ui_question.user_id);
             return None
         }
     }).unwrap_or(false);
+
+    stats.update_points(state.pool.clone()).await;
 
     Ok((StatusCode::OK, Json(result)))
 }
