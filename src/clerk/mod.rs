@@ -14,7 +14,7 @@ pub fn router(pool: PgPool) -> Router {
     Router::new()
         .route("/add", post(add))
         .route("/delete/:user_id", post(delete))
-        .route("points/:user_id", get(get_points_request))
+        .route("/points/:user_id", get(get_points_request))
         .with_state(pool) 
 }
 
