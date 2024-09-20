@@ -89,6 +89,7 @@ impl<'a> UserDb<'a> {
     }
 
     pub async fn add_points_to_user(&self, user_id: &str, points: i32) -> Result<(), Box<dyn Error>> {
+        println!("updating points 3");
 
         let prev_points = sqlx::query_scalar!("SELECT points FROM users WHERE user_id = $1", user_id).fetch_one(self.pool).await?;
 
@@ -118,6 +119,8 @@ impl StatsUi {
     pub async fn update_points(&self, pool: PgPool) -> Result<(), Box<dyn Error>> {
         let userdb = UserDb::new(&pool);
         let points = self.get_points() as i32;
+
+        println!("updating points 2");
         
         userdb.add_points_to_user(&self.user_id, points);
         
