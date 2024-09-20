@@ -97,6 +97,12 @@ impl<'a> UserDb<'a> {
 
         Ok(())
     }
+
+    pub async fn get_poits(&self, user_id: &str) -> Result<i32, Box<dyn Error>> {
+        let points = sqlx::query_scalar!("SELECT points FROM users WHERE user_id = $1", user_id).fetch_one(self.pool).await?;
+
+        Ok(points)
+    }
 }
 
 impl StatsUi {
@@ -122,7 +128,7 @@ impl StatsUi {
 
         println!("updating points 2");
         
-        userdb.add_points_to_user(&self.user_id, points);
+        userdb.add_points_to_user(&self.user_id, points).await;
         
         Ok(())
     }
