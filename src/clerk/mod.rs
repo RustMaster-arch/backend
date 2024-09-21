@@ -15,7 +15,7 @@ pub fn router(pool: PgPool) -> Router {
         .route("/add", post(add))
         .route("/delete/:user_id", post(delete))
         .route("/points/:user_id", get(get_points_request))
-        .route("leader_board", get(get_leader_board))
+        .route("/leader_board", get(get_leader_board))
         .with_state(pool) 
 }
 
