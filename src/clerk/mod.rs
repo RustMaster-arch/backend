@@ -15,6 +15,7 @@ pub fn router(pool: PgPool) -> Router {
         .route("/add", post(add))
         .route("/delete/:user_id", post(delete))
         .route("/points/:user_id", get(get_points_request))
+        .route("leader_board", get(get_leader_board))
         .with_state(pool) 
 }
 
@@ -43,4 +44,12 @@ pub async fn get_points_request(State(pool): State<PgPool>, Path(user_id): Path<
     let points = to_string(&points.unwrap()).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR);
 
     Ok((StatusCode::OK, points))
+}
+
+pub async fn get_leader_board(State(pool): State<PgPool>) -> Result<impl IntoResponse, StatusCode> {
+    let userdb = UserDb::new(&pool);
+    let leader_board = userdb.leader_board().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let leader_board = to_string(&leader_board).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok((StatusCode::OK, [("content-type", "json")], leader_board))
 }

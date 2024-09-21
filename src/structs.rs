@@ -49,6 +49,12 @@ pub struct UserU {
     pub points: i32,
 }
 
+#[derive(Clone, Serialize, Deserialize, Default, Debug)]
+pub struct UserLeaderBoard {
+    pub user_name: String,
+    pub points: i32,
+}
+
 pub struct UserDb<'a> {
     pub pool: &'a PgPool
 }
@@ -102,6 +108,12 @@ impl<'a> UserDb<'a> {
         let points = sqlx::query_scalar!("SELECT points FROM users WHERE user_id = $1", user_id).fetch_one(self.pool).await?;
 
         Ok(points)
+    }
+
+    pub async fn leader_board(&self) -> Result<Vec<UserLeaderBoard>, Box<dyn Error>> {
+        let users = sqlx::query_as!(UserLeaderBoard, "SELECT user_name, points FROM users ORDER BY points").fetch_all(self.pool).await?;
+
+        Ok(users)
     }
 }
 
