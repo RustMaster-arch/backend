@@ -111,7 +111,7 @@ impl<'a> UserDb<'a> {
     }
 
     pub async fn leader_board(&self) -> Result<Vec<UserLeaderBoard>, Box<dyn Error>> {
-        let users = sqlx::query_as!(UserLeaderBoard, "SELECT user_name, points FROM users ORDER BY points").fetch_all(self.pool).await?;
+        let users = sqlx::query_as!(UserLeaderBoard, "SELECT user_name, points FROM users ORDER BY points DESC").fetch_all(self.pool).await?;
 
         Ok(users)
     }
