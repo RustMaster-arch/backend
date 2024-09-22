@@ -7,6 +7,7 @@ const EASY_MULTIPLIER: f32 = 1.2;
 const MEDIUM_MULTIPLIER: f32 = 1.4;
 const HARD_MULTIPLIER: f32 = 1.75;
 const VERY_HARD_MULTIPLIER: f32 = 2.75;
+const LOSS: f32 = 100.;
 
 const CORRECT_POINTS: u32 = 10;
 
@@ -124,14 +125,18 @@ impl StatsUi {
 
     pub fn get_points(&self) -> u32 {
         let current_correct_points = CORRECT_POINTS * self.correct_answers;
+        if self.correct_answers == 1 {
 
-        match self.difficulty.as_str() {
-            "easy" => (current_correct_points as f32 * EASY_MULTIPLIER) as u32,
-            "medium" => (current_correct_points as f32 * MEDIUM_MULTIPLIER) as u32,
-            "hard" => (current_correct_points as f32 * HARD_MULTIPLIER) as u32,
-            "very_hard" => (current_correct_points as f32 * VERY_HARD_MULTIPLIER) as u32,
-            _ => 0,
+            return match self.difficulty.as_str() {
+                "easy" => (current_correct_points as f32 * EASY_MULTIPLIER) as u32,
+                "medium" => (current_correct_points as f32 * MEDIUM_MULTIPLIER) as u32,
+                "hard" => (current_correct_points as f32 * HARD_MULTIPLIER) as u32,
+                "very_hard" => (current_correct_points as f32 * VERY_HARD_MULTIPLIER) as u32,
+                _ => 0,
+            }
         }
+
+        (current_correct_points as f32 - LOSS) as u32
     }
 
     pub async fn update_points(&self, pool: PgPool) -> Result<(), Box<dyn Error>> {
