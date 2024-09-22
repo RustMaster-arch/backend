@@ -123,20 +123,20 @@ impl StatsUi {
         Self { user_id: user_id.to_string(), correct_answers, difficulty: difficulty.to_string() }
     }
 
-    pub fn get_points(&self) -> u32 {
+    pub fn get_points(&self) -> i32 {
         let current_correct_points = CORRECT_POINTS * self.correct_answers;
         if self.correct_answers == 1 {
 
             return match self.difficulty.as_str() {
-                "easy" => (current_correct_points as f32 * EASY_MULTIPLIER) as u32,
-                "medium" => (current_correct_points as f32 * MEDIUM_MULTIPLIER) as u32,
-                "hard" => (current_correct_points as f32 * HARD_MULTIPLIER) as u32,
-                "very_hard" => (current_correct_points as f32 * VERY_HARD_MULTIPLIER) as u32,
+                "easy" => (current_correct_points as f32 * EASY_MULTIPLIER) as i32,
+                "medium" => (current_correct_points as f32 * MEDIUM_MULTIPLIER) as i32,
+                "hard" => (current_correct_points as f32 * HARD_MULTIPLIER) as i32,
+                "very_hard" => (current_correct_points as f32 * VERY_HARD_MULTIPLIER) as i32,
                 _ => 0,
             }
         }
 
-        (current_correct_points as f32 - LOSS) as u32
+        (current_correct_points as f32 - LOSS) as i32
     }
 
     pub async fn update_points(&self, pool: PgPool) -> Result<(), Box<dyn Error>> {
