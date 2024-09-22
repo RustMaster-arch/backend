@@ -3,10 +3,10 @@ use std::error::Error;
 use serde::{Deserialize, Serialize};
 use sqlx::{Acquire, Executor, PgPool};
 
-const EASY_MULTIPLIER: f32 = 1.0;
-const MEDIUM_MULTIPLIER: f32 = 1.2;
-const HARD_MULTIPLIER: f32 = 1.5;
-const VERY_HARD_MULTIPLIER: f32 = 1.75;
+const EASY_MULTIPLIER: f32 = 1.2;
+const MEDIUM_MULTIPLIER: f32 = 1.4;
+const HARD_MULTIPLIER: f32 = 1.75;
+const VERY_HARD_MULTIPLIER: f32 = 2.75;
 
 const CORRECT_POINTS: u32 = 10;
 
