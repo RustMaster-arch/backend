@@ -3,13 +3,13 @@ use std::error::Error;
 use serde::{Deserialize, Serialize};
 use sqlx::{Acquire, Executor, PgPool};
 
-const EASY_MULTIPLIER: f32 = 1.2;
-const MEDIUM_MULTIPLIER: f32 = 1.4;
-const HARD_MULTIPLIER: f32 = 1.75;
-const VERY_HARD_MULTIPLIER: f32 = 2.75;
-const LOSS: f32 = 100.;
+const EASY_MULTIPLIER: f32 = 1.3;
+const MEDIUM_MULTIPLIER: f32 = 1.85;
+const HARD_MULTIPLIER: f32 = 3.75;
+const VERY_HARD_MULTIPLIER: f32 = 5.;
+const LOSS: f32 = 55.;
 
-const CORRECT_POINTS: u32 = 10;
+const CORRECT_POINTS: u32 = 20;
 
 #[derive(Clone, Serialize, Deserialize, Default, Debug, PartialEq)]
 pub struct UIQuestion {
